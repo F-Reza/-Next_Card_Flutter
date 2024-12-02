@@ -1,4 +1,4 @@
-# nextcard
+# NextCard
 
 A new Flutter project  NextCard - Credit Card MS.
 
