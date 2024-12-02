@@ -11,8 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  dependencies:
-  flutter_credit_card: ^4.0.1
+  flutter_credit_card: ^4.0.0
   provider:
   intl:
 
