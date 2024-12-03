@@ -1,5 +1,5 @@
-name: nextcard
-description: "A new Flutter project  NextCard - Credit Card MS."
+name: next_card
+description: "A new Flutter project NextCard - Credit Card MS."
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
@@ -11,9 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  flutter_credit_card: ^4.0.0
-  provider:
-  intl:
+  flutter_credit_card: ^4.0.1
 
 dev_dependencies:
   flutter_test:
@@ -24,7 +22,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - images/
+    - assets/
 
   # fonts:
   #   - family: Schyler

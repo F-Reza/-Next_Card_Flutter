@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.nextdigit" "\0"
-            VALUE "FileDescription", "nextcard" "\0"
+            VALUE "FileDescription", "next_card" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "nextcard" "\0"
+            VALUE "InternalName", "next_card" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 com.nextdigit. All rights reserved." "\0"
-            VALUE "OriginalFilename", "nextcard.exe" "\0"
-            VALUE "ProductName", "nextcard" "\0"
+            VALUE "OriginalFilename", "next_card.exe" "\0"
+            VALUE "ProductName", "next_card" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

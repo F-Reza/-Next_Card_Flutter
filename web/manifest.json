@@ -1,11 +1,11 @@
 {
-    "name": "nextcard",
-    "short_name": "nextcard",
+    "name": "next_card",
+    "short_name": "next_card",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project  NextCard - Credit Card MS.",
+    "description": "A new Flutter project NextCard - Credit Card MS.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

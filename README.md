@@ -1,6 +1,6 @@
-# NextCard
+# next_card
 
-A new Flutter project  NextCard - Credit Card MS.
+A new Flutter project NextCard - Credit Card MS.
 
 ## Getting Started
 
