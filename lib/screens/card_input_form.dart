@@ -31,7 +31,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       isLightTheme ? SystemUiOverlayStyle.dark : SystemUiOverlayStyle.light,
     );
     return MaterialApp(
-      title: 'Flutter Credit Card View Demo',
+      title: 'Next Credit Card',
       debugShowCheckedModeBanner: false,
       themeMode: isLightTheme ? ThemeMode.light : ThemeMode.dark,
       theme: ThemeData(
@@ -80,23 +80,41 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
           builder: (BuildContext context) {
             return Container(
               decoration: BoxDecoration(
-                image: DecorationImage(
+                color: isLightTheme ? AppColors.bgLight : AppColors.bgDark,
+                /*image: DecorationImage(
                   image: ExactAssetImage(
                     isLightTheme ? 'assets/bg-light.png' : 'assets/bg-dark.png',
                   ),
                   fit: BoxFit.fill,
-                ),
+                ),*/
               ),
               child: SafeArea(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
-                    IconButton(
-                      onPressed: () => setState(() {
-                        isLightTheme = !isLightTheme;
-                      }),
-                      icon: Icon(
-                        isLightTheme ? Icons.light_mode : Icons.dark_mode,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(onPressed: () {
+                            //here need action. when clk then goto CardList Page and show all card Listview and need edit delete option
+                          },
+                              icon: Icon(Icons.sd_card_outlined,color: isLightTheme ? Colors.black:Colors.white,),
+                          ),
+                          const Text('Next Credit Card',
+                            style: TextStyle(fontSize: 18,fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+                          ),
+                          IconButton(
+                            onPressed: () => setState(() {
+                              isLightTheme = !isLightTheme;
+                            }),
+                            icon: Icon(
+                              isLightTheme ? Icons.light_mode : Icons.dark_mode,
+                              color: isLightTheme ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     CreditCardWidget(
@@ -121,7 +139,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                           ? AppColors.cardBgLightColor
                           : AppColors.cardBgColor,
                       backgroundImage:
-                      useBackgroundImage ? 'assets/card_bg.png' : null,
+                      useBackgroundImage ? 'assets/card_bg.png' : 'assets/card_bg1.png',
                       isSwipeGestureEnabled: true,
                       onCreditCardWidgetChange:
                           (CreditCardBrand creditCardBrand) {},
@@ -153,18 +171,42 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                               expiryDate: expiryDate,
                               inputConfiguration: const InputConfiguration(
                                 cardNumberDecoration: InputDecoration(
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
                                   labelText: 'Number',
                                   hintText: 'XXXX XXXX XXXX XXXX',
                                 ),
                                 expiryDateDecoration: InputDecoration(
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
                                   labelText: 'Expired Date',
                                   hintText: 'XX/XX',
                                 ),
                                 cvvCodeDecoration: InputDecoration(
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
                                   labelText: 'CVV',
                                   hintText: 'XXX',
                                 ),
                                 cardHolderDecoration: InputDecoration(
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide:  BorderSide(color: Colors.black),
+                                  ),
                                   labelText: 'Card Holder',
                                 ),
                               ),
@@ -181,7 +223,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                                   const Spacer(),
                                   Switch(
                                     value: useGlassMorphism,
-                                    inactiveTrackColor: Colors.grey,
+                                    inactiveTrackColor: Colors.white70,
                                     activeColor: Colors.white,
                                     activeTrackColor: AppColors.colorE5D1B2,
                                     onChanged: (bool value) => setState(() {
@@ -201,7 +243,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                                   const Spacer(),
                                   Switch(
                                     value: useBackgroundImage,
-                                    inactiveTrackColor: Colors.grey,
+                                    inactiveTrackColor: Colors.white70,
                                     activeColor: Colors.white,
                                     activeTrackColor: AppColors.colorE5D1B2,
                                     onChanged: (bool value) => setState(() {
@@ -221,7 +263,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                                   const Spacer(),
                                   Switch(
                                     value: useFloatingAnimation,
-                                    inactiveTrackColor: Colors.grey,
+                                    inactiveTrackColor: Colors.white70,
                                     activeColor: Colors.white,
                                     activeTrackColor: AppColors.colorE5D1B2,
                                     onChanged: (bool value) => setState(() {
@@ -263,7 +305,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                                 child: const Text(
                                   'Validate',
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: Colors.white,
                                     fontFamily: 'halter',
                                     fontSize: 14,
                                     package: 'flutter_credit_card',
@@ -286,6 +328,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
   }
   void _onValidate() {
     if (formKey.currentState?.validate() ?? false) {
+      //here need action. when clk then btn and its valid then save card data to sqflite db as a list
       print('valid!');
     } else {
       print('invalid!');
