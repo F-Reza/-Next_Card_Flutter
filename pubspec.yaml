@@ -13,6 +13,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
   flutter_credit_card:
+  sqflite:
 
 dev_dependencies:
   flutter_test:

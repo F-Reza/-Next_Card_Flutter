@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:next_card/utils/colors_const.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 
 class CreditCardInputForm extends StatefulWidget {
   const CreditCardInputForm({super.key});
+
   @override
   State<CreditCardInputForm> createState() => _CreditCardInputFormState();
 }
+
 class _CreditCardInputFormState extends State<CreditCardInputForm> {
   bool isLightTheme = false;
   String cardNumber = '';
@@ -18,13 +22,67 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
   bool useGlassMorphism = false;
   bool useBackgroundImage = false;
   bool useFloatingAnimation = true;
+
   final OutlineInputBorder border = OutlineInputBorder(
     borderSide: BorderSide(
       color: Colors.grey.withOpacity(0.7),
       width: 2.0,
     ),
   );
+
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  Database? _database;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeDatabase();
+  }
+
+  Future<void> _initializeDatabase() async {
+    _database = await openDatabase(
+      join(await getDatabasesPath(), 'credit_cards.db'),
+      onCreate: (db, version) {
+        return db.execute(
+            'CREATE TABLE cards(id INTEGER PRIMARY KEY, cardNumber TEXT, expiryDate TEXT, cardHolderName TEXT, cvvCode TEXT)'
+        );
+      },
+      version: 1,
+    );
+  }
+
+  Future<void> _saveCard() async {
+    if (_database != null) {
+      await _database!.insert(
+        'cards',
+        {
+          'cardNumber': cardNumber,
+          'expiryDate': expiryDate,
+          'cardHolderName': cardHolderName,
+          'cvvCode': cvvCode,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      print('Card saved successfully!');
+    }
+  }
+
+  Future<void> _navigateToCardList(BuildContext context) async {
+    if (_database != null) {
+      final List<Map<String, dynamic>> cards = await _database!.query('cards');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => CardListPage(
+            cards: cards,
+            database: _database!,
+          ),
+        ),
+      );
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -34,46 +92,8 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       title: 'Next Credit Card',
       debugShowCheckedModeBanner: false,
       themeMode: isLightTheme ? ThemeMode.light : ThemeMode.dark,
-      theme: ThemeData(
-        textTheme: const TextTheme(
-          // Text style for text fields' input.
-          titleMedium: TextStyle(color: Colors.black, fontSize: 18),
-        ),
-        colorScheme: ColorScheme.fromSeed(
-          brightness: Brightness.light,
-          seedColor: Colors.white,
-          background: Colors.black,
-          // Defines colors like cursor color of the text fields.
-          primary: Colors.black,
-        ),
-        // Decoration theme for the text fields.
-        inputDecorationTheme: InputDecorationTheme(
-          hintStyle: const TextStyle(color: Colors.black),
-          labelStyle: const TextStyle(color: Colors.black),
-          focusedBorder: border,
-          enabledBorder: border,
-        ),
-      ),
-      darkTheme: ThemeData(
-        textTheme: const TextTheme(
-          // Text style for text fields' input.
-          titleMedium: TextStyle(color: Colors.white, fontSize: 18),
-        ),
-        colorScheme: ColorScheme.fromSeed(
-          brightness: Brightness.dark,
-          seedColor: Colors.black,
-          background: Colors.white,
-          // Defines colors like cursor color of the text fields.
-          primary: Colors.white,
-        ),
-        // Decoration theme for the text fields.
-        inputDecorationTheme: InputDecorationTheme(
-          hintStyle: const TextStyle(color: Colors.white),
-          labelStyle: const TextStyle(color: Colors.white),
-          focusedBorder: border,
-          enabledBorder: border,
-        ),
-      ),
+      theme: _buildThemeData(Brightness.light),
+      darkTheme: _buildThemeData(Brightness.dark),
       home: Scaffold(
         resizeToAvoidBottomInset: false,
         body: Builder(
@@ -81,12 +101,6 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
             return Container(
               decoration: BoxDecoration(
                 color: isLightTheme ? AppColors.bgLight : AppColors.bgDark,
-                /*image: DecorationImage(
-                  image: ExactAssetImage(
-                    isLightTheme ? 'assets/bg-light.png' : 'assets/bg-dark.png',
-                  ),
-                  fit: BoxFit.fill,
-                ),*/
               ),
               child: SafeArea(
                 child: Column(
@@ -97,13 +111,17 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(onPressed: () {
-                            //here need action. when clk then goto CardList Page and show all card Listview and need edit delete option
-                          },
-                              icon: Icon(Icons.sd_card_outlined,color: isLightTheme ? Colors.black:Colors.white,),
+                          IconButton(
+                            onPressed: () => _navigateToCardList(context),
+                            icon: const Icon(Icons.sd_card_outlined, color: Colors.white),
                           ),
-                          const Text('Next Credit Card',
-                            style: TextStyle(fontSize: 18,fontStyle: FontStyle.italic, fontWeight: FontWeight.bold),
+                          const Text(
+                            'Next Credit Card',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           IconButton(
                             onPressed: () => setState(() {
@@ -125,12 +143,10 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                       cardHolderName: cardHolderName,
                       cvvCode: cvvCode,
                       bankName: 'Axis Bank',
-                      frontCardBorder: useGlassMorphism
-                          ? null
-                          : Border.all(color: Colors.grey),
-                      backCardBorder: useGlassMorphism
-                          ? null
-                          : Border.all(color: Colors.grey),
+                      frontCardBorder:
+                      useGlassMorphism ? null : Border.all(color: Colors.grey),
+                      backCardBorder:
+                      useGlassMorphism ? null : Border.all(color: Colors.grey),
                       showBackView: isCvvFocused,
                       obscureCardNumber: true,
                       obscureCardCvv: true,
@@ -139,20 +155,10 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                           ? AppColors.cardBgLightColor
                           : AppColors.cardBgColor,
                       backgroundImage:
-                      useBackgroundImage ? 'assets/card_bg.png' : 'assets/card_bg1.png',
+                      useBackgroundImage ? 'assets/card_bg.png' : null,
                       isSwipeGestureEnabled: true,
                       onCreditCardWidgetChange:
                           (CreditCardBrand creditCardBrand) {},
-                      customCardTypeIcons: <CustomCardTypeIcon>[
-                        CustomCardTypeIcon(
-                          cardType: CardType.mastercard,
-                          cardImage: Image.asset(
-                            'assets/mastercard.png',
-                            height: 48,
-                            width: 48,
-                          ),
-                        ),
-                      ],
                     ),
                     Expanded(
                       child: SingleChildScrollView(
@@ -171,108 +177,30 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                               expiryDate: expiryDate,
                               inputConfiguration: const InputConfiguration(
                                 cardNumberDecoration: InputDecoration(
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
                                   labelText: 'Number',
                                   hintText: 'XXXX XXXX XXXX XXXX',
                                 ),
                                 expiryDateDecoration: InputDecoration(
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
                                   labelText: 'Expired Date',
                                   hintText: 'XX/XX',
                                 ),
                                 cvvCodeDecoration: InputDecoration(
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
                                   labelText: 'CVV',
                                   hintText: 'XXX',
                                 ),
                                 cardHolderDecoration: InputDecoration(
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide:  BorderSide(color: Colors.black),
-                                  ),
                                   labelText: 'Card Holder',
                                 ),
                               ),
                               onCreditCardModelChange: onCreditCardModelChange,
                             ),
                             const SizedBox(height: 20),
-                            Padding(
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  const Text('Glassmorphism'),
-                                  const Spacer(),
-                                  Switch(
-                                    value: useGlassMorphism,
-                                    inactiveTrackColor: Colors.white70,
-                                    activeColor: Colors.white,
-                                    activeTrackColor: AppColors.colorE5D1B2,
-                                    onChanged: (bool value) => setState(() {
-                                      useGlassMorphism = value;
-                                    }),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  const Text('Card Image'),
-                                  const Spacer(),
-                                  Switch(
-                                    value: useBackgroundImage,
-                                    inactiveTrackColor: Colors.white70,
-                                    activeColor: Colors.white,
-                                    activeTrackColor: AppColors.colorE5D1B2,
-                                    onChanged: (bool value) => setState(() {
-                                      useBackgroundImage = value;
-                                    }),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 16),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: <Widget>[
-                                  const Text('Floating Card'),
-                                  const Spacer(),
-                                  Switch(
-                                    value: useFloatingAnimation,
-                                    inactiveTrackColor: Colors.white70,
-                                    activeColor: Colors.white,
-                                    activeTrackColor: AppColors.colorE5D1B2,
-                                    onChanged: (bool value) => setState(() {
-                                      useFloatingAnimation = value;
-                                    }),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            _buildSwitchRow('Glassmorphism', useGlassMorphism,
+                                    (value) => setState(() => useGlassMorphism = value)),
+                            _buildSwitchRow('Card Image', useBackgroundImage,
+                                    (value) => setState(() => useBackgroundImage = value)),
+                            _buildSwitchRow('Floating Card', useFloatingAnimation,
+                                    (value) => setState(() => useFloatingAnimation = value)),
                             const SizedBox(height: 20),
                             GestureDetector(
                               onTap: _onValidate,
@@ -285,12 +213,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                                   gradient: LinearGradient(
                                     colors: <Color>[
                                       AppColors.colorB58D67,
-                                      AppColors.colorB58D67,
-                                      AppColors.colorE5D1B2,
                                       AppColors.colorF9EED2,
-                                      AppColors.colorEFEFED,
-                                      AppColors.colorF9EED2,
-                                      AppColors.colorB58D67,
                                     ],
                                     begin: Alignment(-1, -4),
                                     end: Alignment(1, 4),
@@ -326,14 +249,42 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       ),
     );
   }
+
+  ThemeData _buildThemeData(Brightness brightness) {
+    return ThemeData(
+      textTheme: TextTheme(
+        titleMedium: TextStyle(
+          color: brightness == Brightness.light ? Colors.black : Colors.white,
+          fontSize: 18,
+        ),
+      ),
+      colorScheme: ColorScheme.fromSeed(
+        brightness: brightness,
+        seedColor: brightness == Brightness.light ? Colors.white : Colors.black,
+        background: brightness == Brightness.light ? Colors.black : Colors.white,
+        primary: brightness == Brightness.light ? Colors.black : Colors.white,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle: TextStyle(
+          color: brightness == Brightness.light ? Colors.black : Colors.white,
+        ),
+        labelStyle: TextStyle(
+          color: brightness == Brightness.light ? Colors.black : Colors.white,
+        ),
+        focusedBorder: border,
+        enabledBorder: border,
+      ),
+    );
+  }
+
   void _onValidate() {
     if (formKey.currentState?.validate() ?? false) {
-      //here need action. when clk then btn and its valid then save card data to sqflite db as a list
-      print('valid!');
+      _saveCard();
     } else {
-      print('invalid!');
+      print('Invalid!');
     }
   }
+
   Glassmorphism? _getGlassmorphismConfig() {
     if (!useGlassMorphism) {
       return null;
@@ -348,6 +299,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
         ? Glassmorphism(blurX: 8.0, blurY: 16.0, gradient: gradient)
         : Glassmorphism.defaultConfig();
   }
+
   void onCreditCardModelChange(CreditCardModel creditCardModel) {
     setState(() {
       cardNumber = creditCardModel.cardNumber;
@@ -356,5 +308,59 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       cvvCode = creditCardModel.cvvCode;
       isCvvFocused = creditCardModel.isCvvFocused;
     });
+  }
+
+  Widget _buildSwitchRow(String title, bool value, Function(bool) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(title),
+          const Spacer(),
+          Switch(
+            value: value,
+            inactiveTrackColor: Colors.white70,
+            activeColor: Colors.white,
+            activeTrackColor: AppColors.colorE5D1B2,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CardListPage extends StatelessWidget {
+  final List<Map<String, dynamic>> cards;
+  final Database database;
+
+  const CardListPage({
+    required this.cards,
+    required this.database,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Saved Cards')),
+      body: ListView.builder(
+        itemCount: cards.length,
+        itemBuilder: (context, index) {
+          final card = cards[index];
+          return ListTile(
+            title: Text(card['cardHolderName']),
+            subtitle: Text(card['cardNumber']),
+            trailing: IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                await database.delete('cards', where: 'id = ?', whereArgs: [card['id']]);
+                Navigator.pop(context);
+              },
+            ),
+          );
+        },
+      ),
+    );
   }
 }
