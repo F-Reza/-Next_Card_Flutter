@@ -113,7 +113,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                         children: [
                           IconButton(
                             onPressed: () => _navigateToCardList(context),
-                            icon: const Icon(Icons.sd_card_outlined, color: Colors.white),
+                            icon: Icon(Icons.sd_card_outlined, color: isLightTheme? Colors.black:Colors.white),
                           ),
                           const Text(
                             'Next Credit Card',
@@ -155,7 +155,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                           ? AppColors.cardBgLightColor
                           : AppColors.cardBgColor,
                       backgroundImage:
-                      useBackgroundImage ? 'assets/card_bg.png' : null,
+                      useBackgroundImage ? 'assets/card_bg.png' : 'assets/card_bg1.png',
                       isSwipeGestureEnabled: true,
                       onCreditCardWidgetChange:
                           (CreditCardBrand creditCardBrand) {},
