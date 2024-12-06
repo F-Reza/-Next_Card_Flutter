@@ -1,9 +1,12 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:next_card/utils/colors_const.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+
+import 'card_list_screen.dart';
 
 
 
@@ -75,7 +78,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => CardListPage(
+          builder: (context) => CardListScreen(
             cards: cards,
             database: _database!,
           ),
@@ -187,7 +190,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
                                     (value) => setState(() => useFloatingAnimation = value)),
                             const SizedBox(height: 20),
                             GestureDetector(
-                              onTap: _onValidate,
+                              onTap: () => _onValidate(context),
                               child: Container(
                                 margin: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -261,12 +264,38 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
     );
   }
 
-  void _onValidate() {
+  void _onValidate(BuildContext context) {
     if (formKey.currentState?.validate() ?? false) {
-      _saveCard();
+      //_saveCard();
+      _clearCard();
+      const snackBar = SnackBar(
+        elevation: 0,
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        content: AwesomeSnackbarContent(
+          title: 'Card is valid!',
+          message:
+          'Card saved on the card list.',
+          contentType: ContentType.success,
+        ),
+      );
+
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(snackBar);
     } else {
       print('Invalid!');
     }
+  }
+
+  void _clearCard() {
+    setState(() {
+      cardNumber = '';
+      expiryDate = '';
+      cardHolderName = '';
+      cvvCode = '';
+    });
+
   }
 
   Glassmorphism? _getGlassmorphismConfig() {
@@ -313,205 +342,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       ),
     );
   }
+
+
 }
 
-
-class CardListPage extends StatelessWidget {
-  final List<Map<String, dynamic>> cards;
-  final Database database;
-
-  const CardListPage({
-    Key? key,
-    required this.cards,
-    required this.database,
-  }) : super(key: key);
-
-  Future<void> _deleteCard(int id) async {
-    await database.delete(
-      'cards',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-    print('Card deleted successfully!');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Saved Cards'),
-        backgroundColor: AppColors.colorB58D67,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-      body: ListView.builder(
-        itemCount: cards.length,
-        itemBuilder: (context, index) {
-          final card = cards[index];
-          return Card(
-            elevation: 3,
-            margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            child: ListTile(
-              leading: const Icon(
-                Icons.credit_card,
-                color: AppColors.colorB58D67,
-              ),
-              title: Text(card['cardHolderName'] ?? 'No Name'),
-              subtitle: Text(
-                '**** **** **** ${card['cardNumber']?.substring(card['cardNumber'].length - 4)}',
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.edit, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditCardPage(
-                            card: card,
-                            database: database,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.red),
-                    onPressed: () async {
-                      await _deleteCard(card['id']);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CardListPage(
-                            cards: List.from(cards)..removeAt(index),
-                            database: database,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-
-class EditCardPage extends StatefulWidget {
-  final Map<String, dynamic> card;
-  final Database database;
-
-  const EditCardPage({
-    super.key,
-    required this.card,
-    required this.database,
-  });
-
-  @override
-  State<EditCardPage> createState() => _EditCardPageState();
-}
-
-class _EditCardPageState extends State<EditCardPage> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  late String cardNumber;
-  late String expiryDate;
-  late String cardHolderName;
-  late String cvvCode;
-
-  @override
-  void initState() {
-    super.initState();
-    cardNumber = widget.card['cardNumber'] ?? '';
-    expiryDate = widget.card['expiryDate'] ?? '';
-    cardHolderName = widget.card['cardHolderName'] ?? '';
-    cvvCode = widget.card['cvvCode'] ?? '';
-  }
-
-  Future<void> _updateCard() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      final id = widget.card['id'];
-      if (id != null) {
-        await widget.database.update(
-          'cards',
-          {
-            'cardNumber': cardNumber,
-            'expiryDate': expiryDate,
-            'cardHolderName': cardHolderName,
-            'cvvCode': cvvCode,
-          },
-          where: 'id = ?',
-          whereArgs: [id],
-        );
-        print('Card updated successfully!');
-        //Navigator.of(context).pop(true);
-      } else {
-        print('Card ID is null. Cannot update.');
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Card'),
-        backgroundColor: AppColors.colorB58D67,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                initialValue: cardNumber,
-                decoration: const InputDecoration(labelText: 'Card Number'),
-                onChanged: (value) => cardNumber = value,
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Card Number is required' : null,
-              ),
-              TextFormField(
-                initialValue: expiryDate,
-                decoration: const InputDecoration(labelText: 'Expiry Date'),
-                onChanged: (value) => expiryDate = value,
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Expiry Date is required' : null,
-              ),
-              TextFormField(
-                initialValue: cardHolderName,
-                decoration: const InputDecoration(labelText: 'Card Holder Name'),
-                onChanged: (value) => cardHolderName = value,
-                validator: (value) =>
-                value == null || value.isEmpty ? 'Card Holder Name is required' : null,
-              ),
-              TextFormField(
-                initialValue: cvvCode,
-                decoration: const InputDecoration(labelText: 'CVV Code'),
-                onChanged: (value) => cvvCode = value,
-                validator: (value) =>
-                value == null || value.isEmpty ? 'CVV Code is required' : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _updateCard,
-                child: const Text('Save Changes'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

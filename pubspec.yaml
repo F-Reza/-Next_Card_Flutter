@@ -16,6 +16,8 @@ dependencies:
   sqflite:
   path:
   path_provider:
+  flutter_svg:
+  awesome_snackbar_content:
 
 dev_dependencies:
   flutter_test:
