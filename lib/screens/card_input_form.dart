@@ -355,6 +355,7 @@ class CardListPage extends StatelessWidget {
         itemBuilder: (context, index) {
           final card = cards[index];
           return Card(
+            elevation: 3,
             margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             child: ListTile(
               leading: const Icon(
