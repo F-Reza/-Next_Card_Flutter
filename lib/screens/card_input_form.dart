@@ -49,7 +49,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       join(await getDatabasesPath(), 'credit_cards.db'),
       onCreate: (db, version) {
         return db.execute(
-            'CREATE TABLE cards(id INTEGER PRIMARY KEY, cardNumber TEXT, expiryDate TEXT, cardHolderName TEXT, cvvCode TEXT)'
+            'CREATE TABLE cards(id INTEGER PRIMARY KEY, cardNumber TEXT, expiryDate TEXT, cardHolderName TEXT, cvvCode TEXT, savedAt TEXT)'
         );
       },
       version: 1,
@@ -65,12 +65,14 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
           'expiryDate': expiryDate,
           'cardHolderName': cardHolderName,
           'cvvCode': cvvCode,
+          'savedAt': DateTime.now().toIso8601String(),
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
       print('Card saved successfully!');
     }
   }
+
 
   Future<void> _navigateToCardList(BuildContext context) async {
     if (_database != null) {
@@ -264,28 +266,63 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
     );
   }
 
-  void _onValidate(BuildContext context) {
+  void _onValidate(BuildContext context) async {
     if (formKey.currentState?.validate() ?? false) {
-      //_saveCard();
-      _clearCard();
-      const snackBar = SnackBar(
-        elevation: 0,
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        content: AwesomeSnackbarContent(
-          title: 'Card is valid!',
-          message:
-          'Card saved on the card list.',
-          contentType: ContentType.success,
-        ),
-      );
+      final isCardExist = await _isCardNumberExist(cardNumber);
 
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(snackBar);
+      if (isCardExist) {
+        const snackBar = SnackBar(
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          content: AwesomeSnackbarContent(
+            title: 'Card already exists!',
+            message:
+            'Please change the card number and try again.',
+            contentType: ContentType.failure,
+          ),
+        );
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(snackBar);
+        print('Card exists');
+      } else {
+        await _saveCard();
+        _clearCard();
+        const snackBar = SnackBar(
+          elevation: 0,
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Colors.transparent,
+          content: AwesomeSnackbarContent(
+            title: 'Card is valid!',
+            message:
+            'Card saved on the card list.',
+            contentType: ContentType.success,
+          ),
+        );
+
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(snackBar);
+        print('Card saved successfully');
+      }
     } else {
       print('Invalid!');
     }
+  }
+
+  Future<bool> _isCardNumberExist(String cardNumber) async {
+    if (_database == null) {
+      throw Exception('Database is not initialized.');
+    }
+
+    final result = await _database!.query(
+      'cards',
+      where: 'cardNumber = ?',
+      whereArgs: [cardNumber],
+    );
+    return result.isNotEmpty;
   }
 
   void _clearCard() {
@@ -295,7 +332,7 @@ class _CreditCardInputFormState extends State<CreditCardInputForm> {
       cardHolderName = '';
       cvvCode = '';
     });
-
+    formKey.currentState?.reset();
   }
 
   Glassmorphism? _getGlassmorphismConfig() {
