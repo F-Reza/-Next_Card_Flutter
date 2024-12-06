@@ -18,6 +18,8 @@ dependencies:
   path_provider:
   flutter_svg:
   awesome_snackbar_content:
+  carousel_slider:
+  dots_indicator:
 
 dev_dependencies:
   flutter_test:
